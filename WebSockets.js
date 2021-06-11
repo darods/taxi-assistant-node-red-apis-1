@@ -1,4 +1,3 @@
-
 var socketRecord = new WebSocket('ws://node-red-ugoae-2021-05-27.mybluemix.net/ws/driverAudio');
 
 socketRecord.onopen = function (event) {
@@ -7,12 +6,13 @@ socketRecord.onopen = function (event) {
 };
 socketRecord.onmessage = function (event) {
     var message = event.data;
-    if(typeof(message)=="string"){
+    if (typeof (message) == "string") {
         console.log(message);
-    }else{
+    } else {
         console.log(message);
+        playAudio(message);
     }
-    
+
 };
 
 socketRecord.onclose = function (event) {
@@ -23,25 +23,33 @@ var constraints = { audio: true };
 
 var mediaRecorder;
 
-navigator.mediaDevices.getUserMedia(constraints).then(function(mediaStream) {
+navigator.mediaDevices.getUserMedia(constraints).then(function (mediaStream) {
 
     mediaRecorder = new MediaRecorder(mediaStream);
-    mediaRecorder.onstart = function(e) {
+    mediaRecorder.onstart = function (e) {
         this.chunks = [];
     };
-    mediaRecorder.ondataavailable = function(e) {
+    mediaRecorder.ondataavailable = function (e) {
         this.chunks.push(e.data);
     };
-    mediaRecorder.onstop = function(e) {
-        var blob = new Blob(this.chunks, { 'type' : 'audio/mp3; codecs=opus' });
+    mediaRecorder.onstop = function (e) {
+        var blob = new Blob(this.chunks, { 'type': 'audio/ogg; codecs=opus' });
         socketRecord.send(blob);
     };
-    
+
 });
 
-function grabar(){
+function grabar() {
     mediaRecorder.start();
-    setTimeout(function() {
+    setTimeout(function () {
         mediaRecorder.stop()
     }, 2000);
+}
+
+
+function playAudio(arrayBuffer) {
+    var blob = new Blob([arrayBuffer], { 'type' : 'audio/ogg; codecs=opus' });
+    var audio = document.createElement('audio');
+    audio.src = window.URL.createObjectURL(blob);
+    audio.play();
 }
